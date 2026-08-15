@@ -1,0 +1,56 @@
+/**
+ * 渲染管线测试 —— 运行：node scripts/test-render.js
+ * 读取真实的示例文章，验证 Front Matter 解析与 Markdown 渲染输出。
+ * 修改 app.js 后建议先跑一遍本测试。
+ */
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+const assert = require('assert');
+
+// 浏览器环境桩：app.js 启动时会调用 renderIndex/renderPost，
+// 在 Node 里让它们安静地返回 false（不渲染），只测纯函数。
+global.document = { getElementById: () => null };
+global.window = { location: { search: '' }, scrollTo: () => {} };
+
+const { renderMarkdown, parseFrontMatter, formatDate } = require('../app.js');
+
+const md = fs.readFileSync(path.join(__dirname, '..', 'posts', 'hello-world.md'), 'utf8');
+const meta = parseFrontMatter(md);
+const html = renderMarkdown(meta.body);
+
+const checks = [
+  ['Front Matter 标题', meta.title === '你好，世界 —— 第一篇博客'],
+  ['Front Matter 日期', meta.date === '2025-08-15'],
+  ['Front Matter 摘要', meta.excerpt.includes('示例文章')],
+  ['正文已剥离 Front Matter', !meta.body.startsWith('---')],
+  ['h2 标题', html.includes('<h2>写作格式示例</h2>')],
+  ['h3 标题', html.includes('<h3>一段代码</h3>')],
+  ['加粗', html.includes('<strong>Markdown 驱动</strong>')],
+  ['斜体', html.includes('<em>斜体</em>')],
+  ['删除线', html.includes('<del>删除线</del>')],
+  ['行内代码', html.includes('<code>posts/</code>')],
+  ['链接', html.includes('<a href="https://github.com" target="_blank" rel="noopener">链接</a>')],
+  ['代码块', html.includes('<pre><code>') && html.includes('def hello')],
+  ['代码块已转义', html.includes('&lt;') || html.includes('&quot;')],
+  ['引用块', html.includes('<blockquote><p>') && html.includes('达·芬奇')],
+  ['无序列表', html.includes('<ul>') && html.includes('<li>段落与')],
+  ['有序列表', html.includes('<ol>') && html.includes('<li>写一篇 Markdown 文章</li>')],
+  ['分割线', html.includes('<hr>')],
+  ['段落', html.includes('<p>欢迎来到我的博客')],
+  ['日期格式化', formatDate('2025-08-15') === '2025 年 8 月 15 日'],
+  ['HTML 注入被转义', !renderMarkdown('## <script>alert(1)</script>').includes('<script>')]
+];
+
+let failed = 0;
+for (const [name, ok] of checks) {
+  console.log((ok ? '✓' : '✗') + ' ' + name);
+  if (!ok) failed++;
+}
+
+if (failed) {
+  console.error(`\n${failed} 项检查失败`);
+  process.exit(1);
+}
+console.log('\n全部通过 ✔');
