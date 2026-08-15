@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * 预渲染构建：把 posts/*.md 渲染成纯静态 HTML，输出到 public/。
- * 公式在构建时用 KaTeX 服务端渲染好 —— 页面打开零等待、零公式引擎下载。
+ * 公式在构建时用 MathJax 服务端渲染成 SVG（与 Obsidian 同一引擎）——
+ * 页面打开零等待、零公式引擎下载，且渲染效果与 Obsidian 完全一致。
  *
  * 用法：
  *   本地：node scripts/build.js（需先 npm install）
@@ -10,12 +11,38 @@
 'use strict';
 
 // 浏览器环境桩：app.js 的启动逻辑在 Node 里静默跳过，只复用纯函数
-global.document = { getElementById: () => null, compatMode: 'CSS1Compat' };
+global.document = {
+  getElementById: () => null,
+  compatMode: 'CSS1Compat',
+  getElementsByTagName: () => []
+};
 global.window = { location: { search: '' }, scrollTo: () => {} };
 
 const fs = require('fs');
 const path = require('path');
-const katex = require('katex');
+
+// MathJax 服务端渲染（mathjax-full，SVG 输出，无需字体文件）
+const { mathjax } = require('mathjax-full/js/mathjax.js');
+const { TeX } = require('mathjax-full/js/input/tex.js');
+const { SVG } = require('mathjax-full/js/output/svg.js');
+const { liteAdaptor } = require('mathjax-full/js/adaptors/liteAdaptor.js');
+const { RegisterHTMLHandler } = require('mathjax-full/js/handlers/html.js');
+const { AllPackages } = require('mathjax-full/js/input/tex/AllPackages.js');
+
+const adaptor = liteAdaptor();
+RegisterHTMLHandler(adaptor);
+const mjTex = new TeX({ packages: AllPackages });
+const mjSvg = new SVG({ fontCache: 'local' });
+const mjDoc = mathjax.document('', { InputJax: mjTex, OutputJax: mjSvg });
+
+function mathToSvg(latex, display) {
+  try {
+    const node = mjDoc.convert(latex, { display: display });
+    return adaptor.outerHTML(node);
+  } catch (e) {
+    return '<span class="math-error">' + escapeHtml(latex) + '</span>';
+  }
+}
 
 const { parseFrontMatter, renderMarkdown, formatDate, escapeHtml, SITE } = require('../app.js');
 
@@ -28,7 +55,7 @@ const FAVICON = "data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%
 
 /* ------------------------------------------------------------------
    公式提取：先把代码块 / 行内代码保护起来（其中的 $ 不应被当公式），
-   再提取 $$...$$ 与 $...$ 并用 KaTeX 服务端渲染，最后恢复代码。
+   再提取 $$...$$ 与 $...$ 并用 MathJax 服务端渲染，最后恢复代码。
    ------------------------------------------------------------------ */
 
 function renderMath(text) {
@@ -44,11 +71,11 @@ function renderMath(text) {
 
   const math = [];
   text = text.replace(/\$\$([\s\S]+?)\$\$/g, (m, body) => {
-    math.push(katex.renderToString(body.trim(), { displayMode: true, throwOnError: false }));
+    math.push(mathToSvg(body.trim(), true));
     return '\u0000M' + (math.length - 1) + '\u0000';
   });
   text = text.replace(/\$(?!\$)([^$\n]+?)\$(?!\$)/g, (m, body) => {
-    math.push(katex.renderToString(body.trim(), { throwOnError: false }));
+    math.push(mathToSvg(body.trim(), false));
     return '\u0000M' + (math.length - 1) + '\u0000';
   });
 
@@ -58,7 +85,7 @@ function renderMath(text) {
 
 /* ------------------------------------------------------------------ 页面模板 */
 
-function pageShell({ title, desc, cssHref, extraHead, content }) {
+function pageShell({ title, desc, cssHref, content }) {
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -68,7 +95,6 @@ function pageShell({ title, desc, cssHref, extraHead, content }) {
   <meta name="description" content="${desc}">
   <link rel="icon" href="${FAVICON}">
   <link rel="stylesheet" href="${cssHref}">
-  ${extraHead || ''}
 </head>
 <body>
   <header class="site-header">
@@ -113,9 +139,6 @@ function build() {
     });
 
     const minutes = Math.max(1, Math.round(meta.body.replace(/\s/g, '').length / 400));
-    const extraHead = math.length
-      ? '<link rel="stylesheet" href="../vendor/katex/katex.min.css">'
-      : '';
 
     const content = `<main class="wrap">
     <p class="back-link"><a href="../index.html">← 返回首页</a></p>
@@ -136,7 +159,6 @@ ${contentHtml}
         title: `${title} · ${SITE.title}`,
         desc: escapeHtml(meta.excerpt || ''),
         cssHref: '../styles.css',
-        extraHead,
         content
       })
     );
@@ -171,16 +193,8 @@ ${items}
     })
   );
 
-  // 静态资源：站点样式、KaTeX（CSS + 字体）、图片附件
+  // 静态资源：站点样式、图片附件
   fs.copyFileSync(path.join(ROOT, 'styles.css'), path.join(OUT_DIR, 'styles.css'));
-
-  const katexDir = path.join(OUT_DIR, 'vendor', 'katex');
-  fs.mkdirSync(katexDir, { recursive: true });
-  fs.copyFileSync(
-    path.join(ROOT, 'node_modules', 'katex', 'dist', 'katex.min.css'),
-    path.join(katexDir, 'katex.min.css')
-  );
-  fs.cpSync(path.join(ROOT, 'node_modules', 'katex', 'dist', 'fonts'), path.join(katexDir, 'fonts'), { recursive: true });
 
   if (fs.existsSync(ASSETS_DIR)) {
     fs.cpSync(ASSETS_DIR, path.join(OUT_DIR, 'assets'), { recursive: true });

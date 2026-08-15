@@ -2,7 +2,7 @@
 
 一个由 **Markdown 驱动**的极简杂志风个人博客，托管于 GitHub Pages。
 
-- 文章在 **Obsidian** 里写，公式用 `$...$` 写 —— 构建时用 KaTeX 服务端渲染，**打开页面就是成品 HTML，零等待、零卡顿**
+- 文章在 **Obsidian** 里写，公式用 `$...$` 写 —— 构建时用 **MathJax 服务端渲染**（与 Obsidian 同一引擎，效果完全一致），**打开页面就是成品 HTML，零等待、零卡顿**
 - 发布 = 从 Obsidian 一键推送（Enveloppe 插件），或手动放 `.md` 进 `posts/` 后 `git push`
 - push 后 GitHub Action 自动完成：预渲染全部文章 → 部署上线（约 1 分钟）
 - 所有代码由 AI Agent 编写；改样式 / 加功能，开 Issue 或直接让 Agent 改
@@ -19,7 +19,7 @@
 ├── scripts/
 │   ├── build.js         # 预渲染构建：Markdown + 公式 → 静态 HTML（public/）
 │   └── test-render.js   # 渲染管线自检（npm test）
-├── package.json    # 构建依赖（仅 KaTeX，构建期使用）
+├── package.json    # 构建依赖（仅 mathjax-full，构建期使用）
 ├── .github/workflows/
 │   └── deploy.yml  # push 后自动构建并部署到 GitHub Pages
 ├── public/         # 构建产物（自动生成，不要手动编辑）

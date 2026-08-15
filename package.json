@@ -19,8 +19,8 @@
     "url": "https://github.com/l05k/l05k.github.io/issues"
   },
   "homepage": "https://github.com/l05k/l05k.github.io#readme",
+  "private": true,
   "devDependencies": {
-    "katex": "^0.18.4"
-  },
-  "private": true
+    "mathjax-full": "^3.2.1"
+  }
 }
