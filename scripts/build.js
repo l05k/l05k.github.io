@@ -46,7 +46,7 @@ const mjDoc = mathjax.document('', { InputJax: mjTex, OutputJax: mjChtml });
 let glyphMetrics = null;
 
 function getGlyphMetrics() {
-  if (glyphMetrics) return glyphMetrics;
+  // 不缓存：样式表是增量生成的，每次调用都能拿到"截至当前已渲染字形"的完整度量
   const css = adaptor.textContent(mjChtml.styleSheet(adaptor));
   const map = {};
   const re = /mjx-c\.mjx-c([0-9A-F]+)(\.TEX-[A-Za-z0-9]+)?::before\s*\{([^}]*)\}/g;
@@ -59,7 +59,6 @@ function getGlyphMetrics() {
       map[base] = map[base] || pad[1].trim();
     }
   }
-  glyphMetrics = map;
   return map;
 }
 
@@ -81,12 +80,14 @@ function mathToHtml(latex, display) {
   try {
     const node = mjDoc.convert(latex, { display: display });
     // 把 LaTeX 源码内嵌到 data-latex，配合 math-copy.js 支持"选中公式复制为 Markdown"
+    // 注意：此处不调用 glyphToText —— 字形度量是增量生成的，
+    // 需等所有公式渲染完后（样式表完整）再统一文本化（见 build() 第二阶段）。
     const markdown = display ? '$$\n' + latex + '\n$$' : '$' + latex + '$';
     return (
       '<span class="math-wrap' + (display ? ' math-display' : '') +
       '" data-latex="' + escapeHtml(latex) +
       '" title="' + escapeHtml(markdown) + '">' +
-      glyphToText(adaptor.outerHTML(node)) + '</span>'
+      adaptor.outerHTML(node) + '</span>'
     );
   } catch (e) {
     return '<span class="math-error">' + escapeHtml(latex) + '</span>';
@@ -172,6 +173,7 @@ function build() {
   fs.mkdirSync(path.join(OUT_DIR, 'posts'), { recursive: true });
 
   const posts = [];
+  const pages = []; // 第一阶段产物：等所有字形渲染完再统一文本化
 
   for (const f of fs.readdirSync(POSTS_DIR).filter((x) => x.endsWith('.md')).sort()) {
     const raw = fs.readFileSync(path.join(POSTS_DIR, f), 'utf8');
@@ -189,35 +191,46 @@ function build() {
       contentHtml = contentHtml.split('\u0000M' + i + '\u0000').join(m);
     });
 
-    const minutes = Math.max(1, Math.round(meta.body.replace(/\s/g, '').length / 400));
+    pages.push({
+      slug,
+      title,
+      desc: meta.excerpt || '',
+      date: meta.date || '',
+      minutes: Math.max(1, Math.round(meta.body.replace(/\s/g, '').length / 400)),
+      hasMath: math.length > 0,
+      contentHtml
+    });
+    posts.push({ slug, title, date: meta.date || '', excerpt: meta.excerpt || '' });
+    console.log('  ✓', f, '→', 'posts/' + slug + '.html' + (math.length ? `（${math.length} 个公式已服务端渲染）` : ''));
+  }
 
+  // 第二阶段：所有公式渲染完毕，样式表完整 —— 统一把字形文本化（可选中复制）
+  for (const p of pages) {
+    p.contentHtml = glyphToText(p.contentHtml);
     const content = `<main class="wrap">
     <p class="back-link"><a href="../index.html">← 返回首页</a></p>
     <article>
       <header class="post-head">
-        <h1 class="post-title">${escapeHtml(title)}</h1>
-        <div class="post-meta">${formatDate(meta.date)} · 阅读约 ${minutes} 分钟</div>
+        <h1 class="post-title">${escapeHtml(p.title)}</h1>
+        <div class="post-meta">${formatDate(p.date)} · 阅读约 ${p.minutes} 分钟</div>
       </header>
       <div class="post-body">
-${contentHtml}
+${p.contentHtml}
       </div>
     </article>
   </main>`;
 
     fs.writeFileSync(
-      path.join(OUT_DIR, 'posts', slug + '.html'),
+      path.join(OUT_DIR, 'posts', p.slug + '.html'),
       pageShell({
-        title: `${title} · ${SITE.title}`,
-        desc: escapeHtml(meta.excerpt || ''),
+        title: `${p.title} · ${SITE.title}`,
+        desc: escapeHtml(p.desc),
         cssHref: '../styles.css',
         content,
-        head: math.length ? '<link rel="stylesheet" href="../vendor/mathjax/chtml.css">' : '',
-        foot: math.length ? '<script src="../math-copy.js" defer></script>' : ''
+        head: p.hasMath ? '<link rel="stylesheet" href="../vendor/mathjax/chtml.css">' : '',
+        foot: p.hasMath ? '<script src="../math-copy.js" defer></script>' : ''
       })
     );
-
-    posts.push({ slug, title, date: meta.date || '', excerpt: meta.excerpt || '' });
-    console.log('  ✓', f, '→', 'posts/' + slug + '.html' + (math.length ? `（${math.length} 个公式已服务端渲染）` : ''));
   }
 
   // 首页：静态文章列表
@@ -272,4 +285,4 @@ ${items}
 
 if (require.main === module) build();
 
-module.exports = { renderMath };
+module.exports = { renderMath, glyphToText, getGlyphMetrics };
