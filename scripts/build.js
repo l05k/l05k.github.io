@@ -36,6 +36,47 @@ const mjTex = new TeX({ packages: AllPackages });
 const mjChtml = new CHTML({ fontURL: './woff-v2' });
 const mjDoc = mathjax.document('', { InputJax: mjTex, OutputJax: mjChtml });
 
+/* ------------------------------------------------------------------
+   字形文本化：SSR 的 CHTML 字形画在 ::before（content+padding）上，
+   mjx-c 元素本身是空的，导致公式无法被划词选中。
+   这里把 Unicode 字符注入为 mjx-c 的真实文本，并把度量（padding）
+   移到元素内联样式、保留零宽盒模型 —— 布局不变，但公式可选中复制。
+   ------------------------------------------------------------------ */
+
+let glyphMetrics = null;
+
+function getGlyphMetrics() {
+  if (glyphMetrics) return glyphMetrics;
+  const css = adaptor.textContent(mjChtml.styleSheet(adaptor));
+  const map = {};
+  const re = /mjx-c\.mjx-c([0-9A-F]+)(\.TEX-[A-Za-z0-9]+)?::before\s*\{([^}]*)\}/g;
+  let m;
+  while ((m = re.exec(css))) {
+    const pad = /\bpadding:\s*([^;}]+)/.exec(m[3]);
+    if (pad) {
+      const base = m[1].toUpperCase();
+      map[base + (m[2] || '')] = pad[1].trim();
+      map[base] = map[base] || pad[1].trim();
+    }
+  }
+  glyphMetrics = map;
+  return map;
+}
+
+function glyphToText(html) {
+  const metrics = getGlyphMetrics();
+  return html.replace(/<mjx-c class="([^"]+)"><\/mjx-c>/g, (m, cls) => {
+    const hm = /\bmjx-c([0-9A-Fa-f]+)\b/.exec(cls);
+    if (!hm) return m;
+    const ch = String.fromCodePoint(parseInt(hm[1], 16));
+    const vm = /\b(TEX-[A-Za-z0-9]+)\b/.exec(cls);
+    const key = hm[1].toUpperCase() + (vm ? '.' + vm[1] : '');
+    const pad = metrics[key] || metrics[hm[1].toUpperCase()];
+    const style = 'display:inline-block;width:0;' + (pad ? 'padding:' + pad + ';' : '');
+    return '<mjx-c class="' + cls + '" style="' + style + '">' + ch + '</mjx-c>';
+  });
+}
+
 function mathToHtml(latex, display) {
   try {
     const node = mjDoc.convert(latex, { display: display });
@@ -45,7 +86,7 @@ function mathToHtml(latex, display) {
       '<span class="math-wrap' + (display ? ' math-display' : '') +
       '" data-latex="' + escapeHtml(latex) +
       '" title="' + escapeHtml(markdown) + '">' +
-      adaptor.outerHTML(node) + '</span>'
+      glyphToText(adaptor.outerHTML(node)) + '</span>'
     );
   } catch (e) {
     return '<span class="math-error">' + escapeHtml(latex) + '</span>';

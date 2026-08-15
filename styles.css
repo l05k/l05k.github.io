@@ -207,6 +207,11 @@ body {
   border-radius: 4px;
 }
 
+/* 字形已文本化（构建时注入），关闭 MathJax 的 ::before 字形绘制，避免双重渲染 */
+.post-body .math-wrap mjx-c::before {
+  content: none !important;
+}
+
 /* ---------------- 状态与错误提示 ---------------- */
 .status {
   padding: 64px 0;
