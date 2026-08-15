@@ -33,8 +33,20 @@ print(hello("Markdown"))
 ### 有序列表
 
 1. 写一篇 Markdown 文章
-2. 在 `posts.json` 里登记一行
-3. `git push`，等待发布
+2. 推送或发布到 GitHub
+3. 等待上线
+
+## 数学公式
+
+公式写法和 Obsidian 里完全一样，行内用 `$...$`：
+
+质能方程 $E = mc^2$，以及欧拉恒等式 $e^{i\pi} + 1 = 0$。
+
+块级公式用 `$$...$$`（独立成行）：
+
+$$
+\int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}
+$$
 
 ---
 

@@ -32,6 +32,45 @@
     return new URLSearchParams(window.location.search).get(name);
   }
 
+  /* ---------------- 数学公式（MathJax 3，与 Obsidian 同引擎） ---------------- */
+
+  function hasMath(text) {
+    // $$...$$ 块级公式
+    if (/\$\$[\s\S]*?\$\$/.test(text)) return true;
+    // $...$ 行内公式（排除 $$ 开头与结尾；$ 后不能是空白）
+    return /\$(?!\$)[^$\n]+\$(?!\$)/.test(text);
+  }
+
+  function loadMathJax() {
+    if (window.MathJax && window.MathJax.typesetPromise) {
+      window.MathJax.typesetPromise().catch(function () {});
+      return;
+    }
+    // 配置必须在本脚本加载前就位：与 Obsidian 相同的 $...$ / $$...$$ 定界符
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']]
+      },
+      svg: { fontCache: 'global' },
+      options: { skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'] }
+    };
+    var s = document.createElement('script');
+    s.src = 'vendor/mathjax-tex-svg.js';
+    s.async = true;
+    s.onload = function () {
+      var retry = function () {
+        if (window.MathJax && window.MathJax.typesetPromise) {
+          window.MathJax.typesetPromise().catch(function () {});
+        } else {
+          setTimeout(retry, 100);
+        }
+      };
+      retry();
+    };
+    document.head.appendChild(s);
+  }
+
   /* ---------------- 迷你 Markdown 渲染器 ----------------
      支持：标题(#~####)、段落、粗体、斜体、删除线、行内代码、
      代码块(```)、引用(>)、有序/无序列表、链接、图片、分割线
@@ -233,6 +272,7 @@
           '<div class="post-body">' + renderMarkdown(meta.body) + '</div>';
         statusEl.hidden = true;
         window.scrollTo(0, 0);
+        if (hasMath(meta.body)) loadMathJax();
       })
       .catch(function (err) {
         statusEl.textContent = '文章加载失败：' + err.message;
@@ -252,7 +292,8 @@
       renderInline: renderInline,
       renderMarkdown: renderMarkdown,
       parseFrontMatter: parseFrontMatter,
-      formatDate: formatDate
+      formatDate: formatDate,
+      hasMath: hasMath
     };
   }
 })();

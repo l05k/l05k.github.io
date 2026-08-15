@@ -14,7 +14,7 @@ const assert = require('assert');
 global.document = { getElementById: () => null };
 global.window = { location: { search: '' }, scrollTo: () => {} };
 
-const { renderMarkdown, parseFrontMatter, formatDate } = require('../app.js');
+const { renderMarkdown, parseFrontMatter, formatDate, hasMath } = require('../app.js');
 
 const md = fs.readFileSync(path.join(__dirname, '..', 'posts', 'hello-world.md'), 'utf8');
 const meta = parseFrontMatter(md);
@@ -40,7 +40,15 @@ const checks = [
   ['分割线', html.includes('<hr>')],
   ['段落', html.includes('<p>欢迎来到我的博客')],
   ['日期格式化', formatDate('2025-08-15') === '2025 年 8 月 15 日'],
-  ['HTML 注入被转义', !renderMarkdown('## <script>alert(1)</script>').includes('<script>')]
+  ['HTML 注入被转义', !renderMarkdown('## <script>alert(1)</script>').includes('<script>')],
+  // ---- 数学公式 ----
+  ['行内公式检测', hasMath('质能方程 $E = mc^2$ 很好') === true],
+  ['块级公式检测', hasMath('$$\n\\int dx\n$$') === true],
+  ['无公式不误报', hasMath('这是普通文本，没有公式。') === false],
+  ['单个 $ 不误报（无闭合）', hasMath('价格是 $100 美元') === false],
+  ['行内公式原样保留', renderMarkdown('质能方程 $E = mc^2$ 成立').includes('$E = mc^2$')],
+  ['块级公式保留在段落中', renderMarkdown('$$\n\\sqrt{2}\n$$').includes('$$')],
+  ['代码内的 $ 不触发公式解析', renderMarkdown('写法是 `$x$` 这样').includes('<code>$x$</code>')]
 ];
 
 let failed = 0;
