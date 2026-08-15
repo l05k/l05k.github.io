@@ -34,6 +34,14 @@ class FakeText {
 }
 
 class Frag extends FakeEl {
+  constructor(tag, attrs, children) {
+    super(tag, attrs, children);
+    // 真实 cloneContents() 返回 DocumentFragment（nodeType 11），测试桩必须一致
+    this.nodeType = 11;
+    this.tagName = undefined;
+    this.classList = undefined;
+    this.getAttribute = () => null;
+  }
   querySelector(sel) {
     if (sel !== '.math-wrap') return null;
     const stack = [...this.childNodes];
@@ -45,6 +53,19 @@ class Frag extends FakeEl {
       }
     }
     return null;
+  }
+  querySelectorAll(sel) {
+    if (sel !== '.math-wrap') return [];
+    const found = [];
+    const stack = [...this.childNodes];
+    while (stack.length) {
+      const n = stack.pop();
+      if (n.nodeType === 1) {
+        if (n.classList.contains('math-wrap')) found.push(n);
+        stack.push(...n.childNodes);
+      }
+    }
+    return found;
   }
 }
 

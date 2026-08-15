@@ -16,12 +16,13 @@
   }
 
   // 遍历克隆的选区片段，重建纯文本：公式整体替换为 Markdown 源码
+  // 注意：片段根是 DocumentFragment（nodeType 11），必须同样递归
   function walk(node, parts) {
     if (node.nodeType === 3) {            // 文本节点
       parts.push(node.nodeValue);
       return;
     }
-    if (node.nodeType !== 1) return;      // 注释等
+    if (node.nodeType !== 1 && node.nodeType !== 11) return; // 注释等；11=DocumentFragment
 
     if (node.classList && node.classList.contains('math-wrap')) {
       var latex = node.getAttribute('data-latex');
