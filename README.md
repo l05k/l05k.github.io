@@ -79,7 +79,7 @@ $$
 ### 第 1 步：创建仓库
 
 1. 打开 <https://github.com/new>
-2. **Repository name 必须填**：`Losk-x.github.io`（你的用户名 + `.github.io`，决定网站地址）
+2. **Repository name 必须填**：`l05k.github.io`（你的用户名 + `.github.io`，决定网站地址）
 3. Visibility 选 **Public**（免费版 Pages 需要公开仓库）
 4. 不要勾选任何初始化选项，直接点 **Create repository**
 
@@ -92,7 +92,7 @@ git init
 git add .
 git commit -m "init: markdown 驱动的个人博客"
 git branch -M main
-git remote add origin https://github.com/Losk-x/Losk-x.github.io.git
+git remote add origin https://github.com/l05k/l05k.github.io.git
 git push -u origin main
 ```
 
@@ -102,7 +102,7 @@ git push -u origin main
 
 1. 打开仓库页面 → **Settings** → 左侧 **Pages**
 2. **Source** 选 `Deploy from a branch`，Branch 选 `main` 和 `/ (root)`，点 **Save**
-3. 等大约 1 分钟，打开 **<https://losk-x.github.io>** 就能看到你的博客了
+3. 等大约 1 分钟，打开 **<https://l05k.github.io>** 就能看到你的博客了
 
 ### 以后每次发文章
 
@@ -124,7 +124,7 @@ GitHub Pages 默认会用 Jekyll 处理仓库，把 `.md` 文件"编译"成 HTML
 
 | 配置项 | 填什么 |
 |---|---|
-| GitHub 仓库 | `Losk-x/Losk-x.github.io`，分支 `main` |
+| GitHub 仓库 | `l05k/l05k.github.io`，分支 `main` |
 | GitHub Token | 在 GitHub 生成（勾选 `repo` 权限）后粘贴进来 |
 | 发布文件夹 | 设为 `posts`（转换后的 .md 放到这里） |
 | 图片文件夹 | 设为 `assets`（笔记里 `![[图片]]` 自动上传到这里） |
