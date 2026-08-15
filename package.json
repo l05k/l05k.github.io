@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "build": "node scripts/build.js",
-    "test": "node scripts/test-render.js"
+    "test": "node scripts/test-render.js && node scripts/test-copy.js"
   },
   "repository": {
     "type": "git",
