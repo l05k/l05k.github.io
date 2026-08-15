@@ -57,6 +57,7 @@ const checks = [
   ['MathJax 输出可用（CHTML 文本）', (() => { const r = require('./build.js').renderMath('$E=mc^2$'); return r.math[0].includes('mjx-container') && !r.math[0].includes('<svg'); })()],
   ['字形已文本化（可选中）', (() => { const b = require('./build.js'); const html = b.glyphToText(b.renderMath('$E=mc^2$').math[0]); return html.includes('>' + String.fromCodePoint(0x1D438) + '</mjx-c>') && html.includes('style="display:inline-block;width:0;padding:'); })()],
   ['后续公式字形度量完整（回归）', (() => { const b = require('./build.js'); const html = b.glyphToText(b.renderMath('$e^{i\\pi}+1=0$').math[0]); return /<mjx-c class="mjx-c1D452[^"]*"[^>]*style="[^"]*padding:/.test(html); })()],
+  ['隐形孪生层存在（选中高亮用）', (() => { const b = require('./build.js'); const html = b.glyphToText(b.renderMath('$E=mc^2$').math[0]); return html.includes('mjx-sel') && html.includes('position:absolute') && html.includes('color:transparent'); })()],
   ['公式内嵌 LaTeX 源码', (() => { const r = require('./build.js').renderMath('$E=mc^2$'); return r.math[0].includes('data-latex="E=mc^2"'); })()],
   ['块级公式标记与源码', (() => { const r = require('./build.js').renderMath('$$\n\\int dx\n$$'); return r.math[0].includes('math-display') && r.math[0].includes('data-latex="\\int dx"'); })()],
   ['LaTeX 特殊字符已转义', (() => { const r = require('./build.js').renderMath('$a < b$'); return r.math[0].includes('data-latex="a &lt; b"'); })()]

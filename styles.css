@@ -212,6 +212,11 @@ body {
   content: none !important;
 }
 
+/* 隐形孪生层（提供正常高度的选中高亮）：选中时保持透明，只显示背景高亮 */
+.post-body .math-wrap .mjx-sel::selection {
+  color: transparent !important;
+}
+
 /* ---------------- 状态与错误提示 ---------------- */
 .status {
   padding: 64px 0;
