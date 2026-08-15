@@ -38,7 +38,14 @@ const mjDoc = mathjax.document('', { InputJax: mjTex, OutputJax: mjSvg });
 function mathToSvg(latex, display) {
   try {
     const node = mjDoc.convert(latex, { display: display });
-    return adaptor.outerHTML(node);
+    // 把 LaTeX 源码内嵌到 data-latex，配合 math-copy.js 支持"选中公式复制为 Markdown"
+    const markdown = display ? '$$\n' + latex + '\n$$' : '$' + latex + '$';
+    return (
+      '<span class="math-wrap' + (display ? ' math-display' : '') +
+      '" data-latex="' + escapeHtml(latex) +
+      '" title="' + escapeHtml(markdown) + '">' +
+      adaptor.outerHTML(node) + '</span>'
+    );
   } catch (e) {
     return '<span class="math-error">' + escapeHtml(latex) + '</span>';
   }
@@ -85,7 +92,7 @@ function renderMath(text) {
 
 /* ------------------------------------------------------------------ 页面模板 */
 
-function pageShell({ title, desc, cssHref, content }) {
+function pageShell({ title, desc, cssHref, content, foot }) {
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -110,6 +117,7 @@ function pageShell({ title, desc, cssHref, content }) {
       <a href="${SITE.sourceUrl}" target="_blank" rel="noopener">GitHub Pages</a>
     </div>
   </footer>
+  ${foot || ''}
 </body>
 </html>`;
 }
@@ -159,7 +167,8 @@ ${contentHtml}
         title: `${title} · ${SITE.title}`,
         desc: escapeHtml(meta.excerpt || ''),
         cssHref: '../styles.css',
-        content
+        content,
+        foot: math.length ? '<script src="../math-copy.js" defer></script>' : ''
       })
     );
 
@@ -193,8 +202,9 @@ ${items}
     })
   );
 
-  // 静态资源：站点样式、图片附件
+  // 静态资源：站点样式、公式复制脚本、图片附件
   fs.copyFileSync(path.join(ROOT, 'styles.css'), path.join(OUT_DIR, 'styles.css'));
+  fs.copyFileSync(path.join(ROOT, 'math-copy.js'), path.join(OUT_DIR, 'math-copy.js'));
 
   if (fs.existsSync(ASSETS_DIR)) {
     fs.cpSync(ASSETS_DIR, path.join(OUT_DIR, 'assets'), { recursive: true });

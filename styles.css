@@ -200,6 +200,13 @@ body {
 
 .post-body del { color: var(--muted); }
 
+/* 公式：悬停提示（可选中复制为 Markdown 源码） */
+.post-body .math-wrap[data-latex]:hover {
+  outline: 1px dashed var(--hairline);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
 /* ---------------- 状态与错误提示 ---------------- */
 .status {
   padding: 64px 0;

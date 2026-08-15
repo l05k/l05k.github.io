@@ -16,6 +16,7 @@
 ├── assets/         # 图片等附件（Obsidian 嵌入的图片发布到这里）
 ├── app.js          # Markdown 渲染器（构建时复用，也用于测试）
 ├── styles.css      # 全部样式 —— 想换风格改顶部 :root 变量
+├── math-copy.js    # 公式复制为 Markdown 的小脚本（含公式的页面自动引入）
 ├── scripts/
 │   ├── build.js         # 预渲染构建：Markdown + 公式 → 静态 HTML（public/）
 │   └── test-render.js   # 渲染管线自检（npm test）
@@ -54,7 +55,7 @@ python3 -m http.server -d public 8000
 
 ### 数学公式
 
-和 Obsidian 完全相同的写法（`$...$` 行内、`$$...$$` 块级）。构建时服务端渲染成静态 HTML，**读者打开页面时不需要下载任何公式引擎**：
+和 Obsidian 完全相同的写法（`$...$` 行内、`$$...$$` 块级）。构建时服务端渲染成静态 SVG，**读者打开页面时不需要下载任何公式引擎**：
 
 ```markdown
 行内公式：质能方程 $E = mc^2$
@@ -64,6 +65,8 @@ $$
 \int_{-\infty}^{\infty} e^{-x^2}\,dx = \sqrt{\pi}
 $$
 ```
+
+**复制公式为 Markdown**：选中任意一个公式后复制，粘贴出来就是 Markdown 源码 —— 行内公式得到 `$...$`，块级公式得到 `$$...$$`（悬停公式会显示源码提示）。这样读者可以直接把公式搬回自己的笔记 / Obsidian 里。
 
 ## 三、首次部署（手把手，只需做一次）
 
