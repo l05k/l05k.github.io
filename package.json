@@ -1,0 +1,26 @@
+{
+  "name": "l05k-github-io",
+  "version": "1.0.0",
+  "description": "Losk 的个人博客 —— Markdown 驱动的静态站点（预渲染构建）",
+  "main": "app.js",
+  "scripts": {
+    "build": "node scripts/build.js",
+    "test": "node scripts/test-render.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/l05k/l05k.github.io.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/l05k/l05k.github.io/issues"
+  },
+  "homepage": "https://github.com/l05k/l05k.github.io#readme",
+  "devDependencies": {
+    "katex": "^0.18.4"
+  },
+  "private": true
+}

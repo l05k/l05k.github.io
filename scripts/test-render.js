@@ -48,7 +48,13 @@ const checks = [
   ['单个 $ 不误报（无闭合）', hasMath('价格是 $100 美元') === false],
   ['行内公式原样保留', renderMarkdown('质能方程 $E = mc^2$ 成立').includes('$E = mc^2$')],
   ['块级公式保留在段落中', renderMarkdown('$$\n\\sqrt{2}\n$$').includes('$$')],
-  ['代码内的 $ 不触发公式解析', renderMarkdown('写法是 `$x$` 这样').includes('<code>$x$</code>')]
+  ['代码内的 $ 不触发公式解析', renderMarkdown('写法是 `$x$` 这样').includes('<code>$x$</code>')],
+  // ---- 构建期公式提取（build.js / renderMath）----
+  ['提取行内公式', (() => { const r = require('./build.js').renderMath('质能方程 $E = mc^2$'); return r.math.length === 1 && r.text.includes('\u0000M0\u0000') && !r.text.includes('$'); })()],
+  ['提取块级公式', (() => { const r = require('./build.js').renderMath('$$\n\\int dx\n$$'); return r.math.length === 1; })()],
+  ['代码中的 $ 被保护', (() => { const r = require('./build.js').renderMath('写法 `$x$` 与 $E=mc^2$'); return r.math.length === 1 && r.text.includes('`$x$`'); })()],
+  ['无闭合 $ 不提取', (() => { const r = require('./build.js').renderMath('价格是 $100 美元'); return r.math.length === 0; })()],
+  ['KaTeX 输出可用', (() => { const r = require('./build.js').renderMath('$E=mc^2$'); return r.math[0].includes('katex'); })()]
 ];
 
 let failed = 0;

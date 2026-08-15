@@ -1,41 +1,41 @@
 # Losk's Journal
 
-一个由 **Markdown 驱动**的极简杂志风个人博客，纯静态、零构建步骤，托管于 GitHub Pages。
+一个由 **Markdown 驱动**的极简杂志风个人博客，托管于 GitHub Pages。
 
-- 文章在 **Obsidian** 里写，公式用 `$...$` 写 —— 和 Obsidian 里显示效果**完全一致**（同一个 MathJax 引擎）
-- 发布 = 从 Obsidian 一键推送（Enveloppe 插件），或手动复制 `.md` 文件进 `posts/` 后 `git push`
-- **`posts.json` 索引全自动维护**：GitHub 上的 Action 每次推送后自动扫描 `posts/` 重新生成，你永远不用碰它
+- 文章在 **Obsidian** 里写，公式用 `$...$` 写 —— 构建时用 KaTeX 服务端渲染，**打开页面就是成品 HTML，零等待、零卡顿**
+- 发布 = 从 Obsidian 一键推送（Enveloppe 插件），或手动放 `.md` 进 `posts/` 后 `git push`
+- push 后 GitHub Action 自动完成：预渲染全部文章 → 部署上线（约 1 分钟）
 - 所有代码由 AI Agent 编写；改样式 / 加功能，开 Issue 或直接让 Agent 改
 
 ## 目录结构
 
 ```
 .
-├── index.html      # 首页：文章列表（读 posts.json）
-├── post.html       # 文章详情页（?file=posts/xxx.md）
-├── styles.css      # 全部样式 —— 想换风格改顶部 :root 变量
-├── app.js          # 站点逻辑 + Markdown 渲染 + 公式按需加载
-├── posts.json      # 文章索引 —— 自动生成，不要手动编辑
-├── posts/          # 放 Markdown 文章的地方
+├── posts/          # Markdown 源文章（唯一需要你写的地方）
 │   └── hello-world.md
 ├── assets/         # 图片等附件（Obsidian 嵌入的图片发布到这里）
-├── vendor/         # 本地托管的三方库（MathJax，无需 CDN）
+├── app.js          # Markdown 渲染器（构建时复用，也用于测试）
+├── styles.css      # 全部样式 —— 想换风格改顶部 :root 变量
 ├── scripts/
-│   ├── test-render.js    # 渲染管线自检（node scripts/test-render.js）
-│   └── update-index.py   # 重新生成 posts.json（本地手动跑）
+│   ├── build.js         # 预渲染构建：Markdown + 公式 → 静态 HTML（public/）
+│   └── test-render.js   # 渲染管线自检（npm test）
+├── package.json    # 构建依赖（仅 KaTeX，构建期使用）
 ├── .github/workflows/
-│   └── update-index.yml  # push 后自动更新 posts.json
+│   └── deploy.yml  # push 后自动构建并部署到 GitHub Pages
+├── public/         # 构建产物（自动生成，不要手动编辑）
 ├── .nojekyll       # 禁用 GitHub Pages 的 Jekyll 处理，别删
 └── README.md
 ```
 
 ## 一、本地预览
 
-macOS / Linux 自带 Python，无需安装任何东西：
+需要 Node.js（构建用）：
 
 ```bash
 cd 本项目目录
-python3 -m http.server 8000
+npm install      # 首次需要
+npm run build    # 预渲染生成 public/
+python3 -m http.server -d public 8000
 ```
 
 浏览器打开 <http://localhost:8000> 即可预览。
@@ -44,22 +44,17 @@ python3 -m http.server 8000
 
 ### 方式 A：从 Obsidian 发布（推荐）
 
-配置好 Enveloppe 插件后（见第五节），在 Obsidian 里写好笔记 → 点一下发布按钮 → 自动推送 → GitHub Action 自动更新索引 → 约 1 分钟后上线。**全程零手动步骤。**
+配置好 Enveloppe 插件后（见第五节），在 Obsidian 里写好笔记 → 点一下发布按钮 → 自动推送 → GitHub Action 自动构建部署 → 约 1 分钟后上线。**全程零手动步骤。**
 
 ### 方式 B：手动发布
 
 1. 复制 `posts/hello-world.md` 为 `posts/你的文章名.md`（文件名建议英文小写短横线）
 2. 文件头 Front Matter 写 `title` / `date`（`YYYY-MM-DD`）/ `excerpt`（可选），正文用 Markdown 写
-3. 本地预览确认无误后 `git push`
-4. 推送后 GitHub Action 会自动更新 `posts.json`；本地预览则跑一句：
-
-```bash
-python3 scripts/update-index.py
-```
+3. `git push` —— 剩下的（构建、部署）全自动
 
 ### 数学公式
 
-和 Obsidian 完全相同的写法与渲染（内置 MathJax 3，与 Obsidian 同引擎）：
+和 Obsidian 完全相同的写法（`$...$` 行内、`$$...$$` 块级）。构建时服务端渲染成静态 HTML，**读者打开页面时不需要下载任何公式引擎**：
 
 ```markdown
 行内公式：质能方程 $E = mc^2$
@@ -70,9 +65,7 @@ $$
 $$
 ```
 
-公式引擎是**按需加载**的本地文件（`vendor/`），只有包含公式的文章才会加载，不依赖任何 CDN。
-
-## 三、发布到 GitHub Pages（手把手）
+## 三、首次部署（手把手，只需做一次）
 
 > 前提：有一个 GitHub 账号。以下步骤只需做一次，之后每次发文章只需 push。
 
@@ -98,11 +91,13 @@ git push -u origin main
 
 第一次 push 会要求输入 GitHub 用户名和密码（密码处填 **Personal Access Token**，不是登录密码。生成方法：GitHub → Settings → Developer settings → Personal access tokens → Generate new token，勾选 `repo` 权限）。
 
-### 第 3 步：开启 Pages
+### 第 3 步：开启 Pages（选择 GitHub Actions 作为来源）
 
 1. 打开仓库页面 → **Settings** → 左侧 **Pages**
-2. **Source** 选 `Deploy from a branch`，Branch 选 `main` 和 `/ (root)`，点 **Save**
-3. 等大约 1 分钟，打开 **<https://l05k.github.io>** 就能看到你的博客了
+2. **Source** 选 `GitHub Actions`（不是 Deploy from a branch！）
+3. 推送后 Action 会自动构建并部署，等约 1 分钟，打开 **<https://l05k.github.io>** 就能看到你的博客了
+
+> 如果 Source 显示的是 "Deploy from a branch"，切换到 `GitHub Actions` 即可，无需其它设置。
 
 ### 以后每次发文章
 
@@ -116,7 +111,7 @@ git push
 
 ## 四、为什么有个 `.nojekyll` 文件？
 
-GitHub Pages 默认会用 Jekyll 处理仓库，把 `.md` 文件"编译"成 HTML —— 这会让"浏览器直接读取 Markdown"机制失效。`.nojekyll` 是一个空文件，作用是关闭 Jekyll，让仓库里的文件**原样**被托管。**不要删除它。**
+GitHub Pages 默认会用 Jekyll 处理仓库，把 `.md` 文件"编译"成 HTML。`.nojekyll` 是空文件，作用是关闭 Jekyll（当前使用 Actions 部署时它不影响构建，但保留它以兼容任何分支部署方式）。**不要删除它。**
 
 ## 五、从 Obsidian 一键发布（Enveloppe 插件）
 
@@ -131,13 +126,13 @@ GitHub Pages 默认会用 Jekyll 处理仓库，把 `.md` 文件"编译"成 HTML
 | Front Matter | 保留 `title` / `date` / `excerpt` 三个属性（列表页显示用） |
 | 双链转换 | 开启（`[[笔记]]` 自动转成相对链接） |
 
-配置完成后：在 Obsidian 里写好笔记 → 右键 / 命令面板选择"Enveloppe 发布"→ 自动推送 → GitHub Action 自动更新索引 → 上线。
+配置完成后：在 Obsidian 里写好笔记 → 右键 / 命令面板选择"Enveloppe 发布"→ 自动推送 → 自动构建部署 → 上线。
 
 > 详细配置以插件官方文档为准：<https://enveloppe.ovh/>
 
 ## 六、修改样式 / 功能（交给 AI，不写代码）
 
-这个项目刻意保持简单，所有代码集中、零依赖，任何 AI Agent 都能快速理解并修改。
+这个项目刻意保持简单，所有代码集中，任何 AI Agent 都能快速理解并修改。
 
 **推荐流程：GitHub Issues**
 
@@ -145,21 +140,21 @@ GitHub Pages 默认会用 Jekyll 处理仓库，把 `.md` 文件"编译"成 HTML
 2. 让 AI Agent 读取这个 issue 来改代码、提交、推送
 3. 推送后自动上线，issue 可以关闭归档
 
-想改小东西也可以直接告诉 AI：配色在 `styles.css` 顶部的 `:root` 变量里，站名在 `index.html` / `post.html` 头部和 `app.js` 的 `SITE` 配置里。
+想改小东西也可以直接告诉 AI：配色在 `styles.css` 顶部的 `:root` 变量里，站名/署名/链接在 `app.js` 顶部的 `SITE` 配置里。
 
 ## 七、常见问题
 
 **文章不显示？**
-- 检查 `posts.json` 是否被自动更新（推送后等 1 分钟；本地跑 `python3 scripts/update-index.py`）
-- 检查 Front Matter 是否写了 `date`，文件名即 `slug`
-- 浏览器 Ctrl/Cmd + Shift + R 强制刷新（避开缓存）
+- 推送后等 1 分钟（构建 + 部署需要时间），浏览器 Ctrl/Cmd + Shift + R 强制刷新
+- 检查 Front Matter 是否写了 `date`，文件名即文章链接名
 
-**公式不渲染？**
+**公式不显示 / 显示乱码？**
 - 确认文章里有成对的 `$...$` 或 `$$...$$`
-- 公式引擎按需加载，首次加载约 2MB（本地文件，无 CDN 依赖）
+- 构建日志里每个公式都会显示"已服务端渲染"（仓库 Actions 页可看）
+- 公式在构建时渲染，读者端零负担
 
 **想用更复杂的 Markdown（表格、脚注等）？**
-当前内置渲染器支持基础语法 + 公式。开 issue 让 Agent 接入 [marked](https://marked.js.org/) 或扩展渲染器。
+当前渲染器支持基础语法 + 公式。开 issue 让 Agent 接入 [marked](https://marked.js.org/) 或扩展渲染器。
 
 **想换域名？**
 仓库 Settings → Pages → Custom domain 配置你自己的域名即可。

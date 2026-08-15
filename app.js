@@ -9,7 +9,9 @@
   /* ---------- 站点配置：想改站名 / 署名，改这里 ---------- */
   var SITE = {
     title: "Losk's Journal",
-    author: 'Losk'
+    tagline: 'MARKDOWN · STATIC · GITHUB PAGES',
+    author: 'Losk',
+    sourceUrl: 'https://github.com/l05k/l05k.github.io'
   };
 
   /* ---------------- 工具 ---------------- */
@@ -288,6 +290,7 @@
 
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
+      SITE: SITE,
       escapeHtml: escapeHtml,
       renderInline: renderInline,
       renderMarkdown: renderMarkdown,
