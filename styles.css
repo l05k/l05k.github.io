@@ -212,20 +212,6 @@ body {
   content: none !important;
 }
 
-/* 真实字形文本不可拖选（否则 MathJax 字体的退化度量会产生 4px 残条），
-   孪生层重写为可选中 —— 真实拖选只会选中孪生层的 20px 矩形 */
-.post-body .math-wrap mjx-c {
-  user-select: none;
-}
-.post-body .math-wrap .mjx-sel {
-  user-select: text;
-}
-
-/* 隐形孪生层（提供正常高度的选中高亮）：选中时保持透明，只显示背景高亮 */
-.post-body .math-wrap .mjx-sel::selection {
-  color: transparent !important;
-}
-
 /* ---------------- 状态与错误提示 ---------------- */
 .status {
   padding: 64px 0;

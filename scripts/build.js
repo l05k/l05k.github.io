@@ -71,14 +71,8 @@ function glyphToText(html) {
     const vm = /\b(TEX-[A-Za-z0-9]+)\b/.exec(cls);
     const key = hm[1].toUpperCase() + (vm ? '.' + vm[1] : '');
     const pad = metrics[key] || metrics[hm[1].toUpperCase()];
-    const style = 'display:inline-block;width:0;position:relative;' + (pad ? 'padding:' + pad + ';' : '');
-    // 隐形孪生层：MathJax 字体度量极小导致选区矩形只有几像素高；
-    // 用普通度量字体的透明同字符叠加，让选中高亮恢复正常高度（不影响视觉与布局）
-    const twin =
-      '<span class="mjx-sel" aria-hidden="true" style="position:absolute;left:0;top:0;' +
-      'line-height:1.14;font-family:Georgia,\'Times New Roman\',serif;color:transparent;">' +
-      ch + '</span>';
-    return '<mjx-c class="' + cls + '" style="' + style + '">' + twin + ch + '</mjx-c>';
+    const style = 'display:inline-block;width:0;' + (pad ? 'padding:' + pad + ';' : '');
+    return '<mjx-c class="' + cls + '" style="' + style + '">' + ch + '</mjx-c>';
   });
 }
 
