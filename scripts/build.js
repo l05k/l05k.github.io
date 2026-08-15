@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 /**
  * 预渲染构建：把 posts/*.md 渲染成纯静态 HTML，输出到 public/。
- * 公式在构建时用 MathJax 服务端渲染成 SVG（与 Obsidian 同一引擎）——
- * 页面打开零等待、零公式引擎下载，且渲染效果与 Obsidian 完全一致。
+ * 公式在构建时用 MathJax 服务端渲染成 CHTML 文本（与 Obsidian 同一引擎）——
+ * 页面打开零等待、零公式引擎下载，公式可选中，渲染效果与 Obsidian 完全一致。
  *
  * 用法：
  *   本地：node scripts/build.js（需先 npm install）
@@ -21,10 +21,10 @@ global.window = { location: { search: '' }, scrollTo: () => {} };
 const fs = require('fs');
 const path = require('path');
 
-// MathJax 服务端渲染（mathjax-full，SVG 输出，无需字体文件）
+// MathJax 服务端渲染（mathjax-full，CHTML 文本输出 —— 公式是真实 HTML 文本，可选中复制）
 const { mathjax } = require('mathjax-full/js/mathjax.js');
 const { TeX } = require('mathjax-full/js/input/tex.js');
-const { SVG } = require('mathjax-full/js/output/svg.js');
+const { CHTML } = require('mathjax-full/js/output/chtml.js');
 const { liteAdaptor } = require('mathjax-full/js/adaptors/liteAdaptor.js');
 const { RegisterHTMLHandler } = require('mathjax-full/js/handlers/html.js');
 const { AllPackages } = require('mathjax-full/js/input/tex/AllPackages.js');
@@ -32,10 +32,11 @@ const { AllPackages } = require('mathjax-full/js/input/tex/AllPackages.js');
 const adaptor = liteAdaptor();
 RegisterHTMLHandler(adaptor);
 const mjTex = new TeX({ packages: AllPackages });
-const mjSvg = new SVG({ fontCache: 'local' });
-const mjDoc = mathjax.document('', { InputJax: mjTex, OutputJax: mjSvg });
+// fontURL 相对于 chtml.css 所在目录（public/vendor/mathjax/woff-v2/）
+const mjChtml = new CHTML({ fontURL: './woff-v2' });
+const mjDoc = mathjax.document('', { InputJax: mjTex, OutputJax: mjChtml });
 
-function mathToSvg(latex, display) {
+function mathToHtml(latex, display) {
   try {
     const node = mjDoc.convert(latex, { display: display });
     // 把 LaTeX 源码内嵌到 data-latex，配合 math-copy.js 支持"选中公式复制为 Markdown"
@@ -78,11 +79,11 @@ function renderMath(text) {
 
   const math = [];
   text = text.replace(/\$\$([\s\S]+?)\$\$/g, (m, body) => {
-    math.push(mathToSvg(body.trim(), true));
+    math.push(mathToHtml(body.trim(), true));
     return '\u0000M' + (math.length - 1) + '\u0000';
   });
   text = text.replace(/\$(?!\$)([^$\n]+?)\$(?!\$)/g, (m, body) => {
-    math.push(mathToSvg(body.trim(), false));
+    math.push(mathToHtml(body.trim(), false));
     return '\u0000M' + (math.length - 1) + '\u0000';
   });
 
@@ -92,7 +93,7 @@ function renderMath(text) {
 
 /* ------------------------------------------------------------------ 页面模板 */
 
-function pageShell({ title, desc, cssHref, content, foot }) {
+function pageShell({ title, desc, cssHref, content, head, foot }) {
   return `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -102,6 +103,7 @@ function pageShell({ title, desc, cssHref, content, foot }) {
   <meta name="description" content="${desc}">
   <link rel="icon" href="${FAVICON}">
   <link rel="stylesheet" href="${cssHref}">
+  ${head || ''}
 </head>
 <body>
   <header class="site-header">
@@ -168,6 +170,7 @@ ${contentHtml}
         desc: escapeHtml(meta.excerpt || ''),
         cssHref: '../styles.css',
         content,
+        head: math.length ? '<link rel="stylesheet" href="../vendor/mathjax/chtml.css">' : '',
         foot: math.length ? '<script src="../math-copy.js" defer></script>' : ''
       })
     );
@@ -205,6 +208,19 @@ ${items}
   // 静态资源：站点样式、公式复制脚本、图片附件
   fs.copyFileSync(path.join(ROOT, 'styles.css'), path.join(OUT_DIR, 'styles.css'));
   fs.copyFileSync(path.join(ROOT, 'math-copy.js'), path.join(OUT_DIR, 'math-copy.js'));
+
+  // MathJax CHTML 样式 + 字体（公式页引用；字体按需下载，无 JS 引擎）
+  const mjDir = path.join(OUT_DIR, 'vendor', 'mathjax');
+  fs.mkdirSync(mjDir, { recursive: true });
+  fs.writeFileSync(
+    path.join(mjDir, 'chtml.css'),
+    adaptor.textContent(mjChtml.styleSheet(adaptor))
+  );
+  fs.cpSync(
+    path.join(ROOT, 'node_modules', 'mathjax-full', 'es5', 'output', 'chtml', 'fonts', 'woff-v2'),
+    path.join(mjDir, 'woff-v2'),
+    { recursive: true }
+  );
 
   if (fs.existsSync(ASSETS_DIR)) {
     fs.cpSync(ASSETS_DIR, path.join(OUT_DIR, 'assets'), { recursive: true });
