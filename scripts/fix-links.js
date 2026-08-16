@@ -21,7 +21,10 @@ const PROTOCOL = /^(mailto:|tel:|data:|javascript:|blob:)/i;
 
 function fixPath(p) {
   if (!p || p === '/' || p.endsWith('/')) return p; // 根/目录：服务器解析 index.html
+  if (/^\.{1,3}$/.test(p)) return p;                // 纯点相对路径（. .. ...）：指向目录/上级
   if (KNOWN_EXT.test(p)) return p;                  // 已有扩展名
+  if (p.startsWith('./')) return './' + fixPath(p.slice(2));
+  if (p.startsWith('../')) return '../' + fixPath(p.slice(3));
   return p + '.html';
 }
 

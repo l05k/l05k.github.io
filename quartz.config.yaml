@@ -244,6 +244,8 @@ plugins:
       limit: 5
       linkToMore: false
       showTags: true
+      hideFolderPages: true
+      hideTagPages: true
     layout:
       position: left
       priority: 25

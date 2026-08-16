@@ -43,7 +43,7 @@ jobs:
       - name: Install Quartz plugins
         run: npx quartz plugin install --from-config
       - name: Build Quartz
-        run: npx quartz build && node scripts/fix-links.js
+        run: npx quartz build && node scripts/fix-links.js && node scripts/check-links.js
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
