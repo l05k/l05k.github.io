@@ -9,7 +9,7 @@ configuration:
   analytics:
     provider: null
   locale: zh-CN
-  baseUrl: l05k.github.io
+  baseUrl: l05k.com
   ignorePatterns:
     - private
     - templates
