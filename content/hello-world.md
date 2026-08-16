@@ -5,7 +5,7 @@ excerpt: 这是一篇示例文章，展示这个博客的 Markdown 写作方式�
 description: 这是一篇示例文章，展示这个博客的 Markdown 写作方式与排版效果。
 ---
 
-欢迎来到我的博客！这个站点由 **Markdown 驱动**：你（或任何 AI Agent）只需要往 `posts/` 文件夹里放一个 `.md` 文件，再在 `posts.json` 里登记一行，推送后文章就上线了。
+欢迎来到我的博客！这个站点由 **Markdown 驱动**：你（或任何 AI Agent）只需要往 `content/` 文件夹里放一个 `.md` 文件，推送后文章就上线了。
 
 ## 写作格式示例
 
