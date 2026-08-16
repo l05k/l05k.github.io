@@ -1,3 +1,8 @@
 @use "./variables.scss" as *;
 
 // put your custom CSS here!
+
+/* 隐藏"最近文章"区块的时间信息，与导航栏视觉统一 */
+.recent-notes > ul.recent-ul > li .section > .meta {
+  display: none;
+}
