@@ -18,30 +18,30 @@ configuration:
     fontOrigin: local
     cdnCaching: true
     typography:
-      header: '"Songti SC", Georgia, "Times New Roman", "Noto Serif SC", "SimSun", serif'
-      body: '"Songti SC", Georgia, "Times New Roman", "Noto Serif SC", "SimSun", serif'
-      code: '"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace'
+      header: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif'
+      body: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif'
+      code: 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace'
     colors:
       lightMode:
-        light: "#fbfaf6"
-        lightgray: "#e6e1d3"
-        gray: "#80796d"
-        darkgray: "#211f1c"
-        dark: "#211f1c"
-        secondary: "#c0392b"
-        tertiary: "#a35a4a"
-        highlight: rgba(192, 57, 43, 0.12)
-        textHighlight: "#f3c2b0"
+        light: "#faf8f8"
+        lightgray: "#e5e5e5"
+        gray: "#b8b8b8"
+        darkgray: "#4e4e4e"
+        dark: "#2b2b2b"
+        secondary: "#284b63"
+        tertiary: "#84a59d"
+        highlight: rgba(143, 159, 169, 0.15)
+        textHighlight: "#fff23688"
       darkMode:
-        light: "#1b1916"
-        lightgray: "#33302a"
-        gray: "#8a8378"
-        darkgray: "#e8e4da"
-        dark: "#f3efe4"
-        secondary: "#d96a55"
-        tertiary: "#b57562"
-        highlight: rgba(217, 106, 85, 0.15)
-        textHighlight: "#8a4a3a"
+        light: "#161618"
+        lightgray: "#393639"
+        gray: "#646464"
+        darkgray: "#d4d4d4"
+        dark: "#ebebec"
+        secondary: "#7b97aa"
+        tertiary: "#84a59d"
+        highlight: rgba(143, 159, 169, 0.15)
+        textHighlight: "#b3aa0288"
 plugins:
   - source: "@quartz-community/created-modified-date"
     enabled: true
@@ -104,9 +104,9 @@ plugins:
     enabled: true
     options:
       fontOrigin: local
-      body: '"Songti SC", Georgia, "Times New Roman", "Noto Serif SC", "SimSun", serif'
-      header: '"Songti SC", Georgia, "Times New Roman", "Noto Serif SC", "SimSun", serif'
-      code: '"IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace'
+      body: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif'
+      header: '-apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif'
+      code: 'ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace'
   - source: "@quartz-themes/core"
     enabled: false
     options:
