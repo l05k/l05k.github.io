@@ -18,6 +18,7 @@ Obsidian (Enveloppe 插件) ──推送──> content/posts/*.md ──GitHub 
 ```bash
 npm ci
 npx quartz plugin install --from-config   # 安装配置引用的插件
+npx quartz build && node scripts/fix-links.js   # 构建 + 修复链接（GitHub Pages 需要）
 npx quartz build --serve                  # 本地预览 http://localhost:8080
 ```
 
