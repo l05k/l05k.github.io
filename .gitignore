@@ -1,4 +1,10 @@
 .DS_Store
 *.log
-node_modules/
-public/
+node_modules
+public
+.quartz
+.quartz-cache
+.obsidian
+private/
+.npm-cache
+tsconfig.tsbuildinfo

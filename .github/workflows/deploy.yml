@@ -1,8 +1,9 @@
-name: 构建并部署到 GitHub Pages
+name: Deploy Quartz site to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -10,31 +11,51 @@ permissions:
   id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: true
+  group: "pages"
+  cancel-in-progress: false
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0 # 需要完整 git 历史（文章日期元数据）
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
-
-      - run: npm ci
-
-      - name: 预渲染构建（Markdown → 静态 HTML，公式服务端渲染）
-        run: node scripts/build.js
-
-      - uses: actions/upload-pages-artifact@v3
+          node-version: 24
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: Cache Quartz plugins
+        uses: actions/cache@v4
+        with:
+          path: .quartz/plugins
+          key: ${{ runner.os }}-plugins-${{ hashFiles('quartz.lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-plugins-
+      - name: Install Dependencies
+        run: npm ci
+      - name: Install Quartz plugins
+        run: npx quartz plugin install --from-config
+      - name: Build Quartz
+        run: npx quartz build
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
         with:
           path: public
 
-      - id: deployment
+  deploy:
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
