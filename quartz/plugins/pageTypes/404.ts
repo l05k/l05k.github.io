@@ -23,7 +23,8 @@ export const NotFoundPageType: QuartzPageTypePlugin = () => ({
       {
         slug,
         title: notFound,
-        data: vfile.data,
+        // unlisted: 让 recent-notes 等列表组件过滤掉 404 页（页面本身照常生成）
+        data: { ...vfile.data, unlisted: true },
       },
     ]
   },
